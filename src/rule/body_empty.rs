@@ -16,14 +16,21 @@ pub struct BodyEmpty {
 /// BodyEmpty represents the body-empty rule.
 impl Rule for BodyEmpty {
     const NAME: &'static str = "body-empty";
-    const LEVEL: Level = Level::Error;
+    const LEVEL: Level = Level::Warning;
 
     fn message(&self, _message: &Message) -> String {
-        "body is empty".to_string()
+        "Message body is empty".to_string()
     }
 
     fn validate(&self, message: &Message) -> Option<Violation> {
         if message.body.is_none() {
+            // The body can be empty only if subject is not empty.
+            if message.subject.is_none() {
+                return Some(Violation {
+                    level: Level::Error,
+                    message: self.message(message),
+                });
+            }
             return Some(Violation {
                 level: self.level.unwrap_or(Self::LEVEL),
                 message: self.message(message),
@@ -76,12 +83,29 @@ Hello world"
             r#type: Some("feat".to_string()),
             raw: "feat(scope): broadcast $destroy event on scope destruction".to_string(),
             scope: Some("scope".to_string()),
+            subject: Some("feat(scope): broadcast $destroy event on scope destruction".to_string()),
+        };
+
+        let violation = rule.validate(&message);
+        assert!(violation.is_some());
+        assert_eq!(violation.clone().unwrap().level, Level::Warning);
+    }
+
+    #[test]
+    fn test_empty_body_and_subject() {
+        let rule = BodyEmpty::default();
+        let message = Message {
+            body: None,
+            description: None,
+            footers: None,
+            r#type: Some("feat".to_string()),
+            raw: "feat(scope): broadcast $destroy event on scope destruction".to_string(),
+            scope: Some("scope".to_string()),
             subject: None,
         };
 
         let violation = rule.validate(&message);
         assert!(violation.is_some());
         assert_eq!(violation.clone().unwrap().level, Level::Error);
-        assert_eq!(violation.unwrap().message, "body is empty".to_string());
     }
 }

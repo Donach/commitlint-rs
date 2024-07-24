@@ -56,11 +56,11 @@ async fn main() {
                 for violation in &h.violations {
                     match violation.level {
                         rule::Level::Error => {
-                            eprintln!("{}", violation.message);
+                            eprintln!("ERROR: {}", violation.message);
                             has_error = true
                         }
                         rule::Level::Warning => {
-                            println!("{}", violation.message);
+                            println!("WARN: {}", violation.message);
                         }
                         _ => {}
                     }
