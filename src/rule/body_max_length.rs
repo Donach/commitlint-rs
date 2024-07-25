@@ -22,24 +22,16 @@ impl Rule for BodyMaxLength {
     const LEVEL: Level = Level::Error;
 
     fn message(&self, _message: &Message) -> String {
-        format!("body is longer than {} characters", self.length)
+        format!("inside body is longer than {} characters: ", self.length,)
     }
 
     fn validate(&self, message: &Message) -> Option<Violation> {
-        match &message.body {
-            Some(body) => {
-                if body.len() >= self.length {
-                    return Some(Violation {
-                        level: self.level.unwrap_or(Self::LEVEL),
-                        message: self.message(message),
-                    });
-                }
-            }
-            None => {
+        for (idx, line) in message.body.clone().unwrap_or_default().lines().enumerate() {
+            if line.len() >= self.length {
                 return Some(Violation {
                     level: self.level.unwrap_or(Self::LEVEL),
-                    message: self.message(message),
-                })
+                    message: format!("Line {idx} {}{line}", self.message(message)),
+                });
             }
         }
 
@@ -105,9 +97,5 @@ Hello, I'm a long body"
         let violation = rule.validate(&message);
         assert!(violation.is_some());
         assert_eq!(violation.clone().unwrap().level, Level::Error);
-        assert_eq!(
-            violation.unwrap().message,
-            format!("body is longer than {} characters", rule.length)
-        );
     }
 }

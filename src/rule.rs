@@ -7,8 +7,8 @@ use self::{
     body_empty::BodyEmpty, body_max_length::BodyMaxLength, description_empty::DescriptionEmpty,
     description_format::DescriptionFormat, description_max_length::DescriptionMaxLength,
     r#type::Type, scope::Scope, scope_empty::ScopeEmpty, scope_format::ScopeFormat,
-    scope_max_length::ScopeMaxLength, subject_empty::SubjectEmpty, type_empty::TypeEmpty,
-    type_format::TypeFormat, type_max_length::TypeMaxLength,
+    scope_max_length::ScopeMaxLength, subject_empty::SubjectEmpty, ticket_id::TicketId,
+    type_empty::TypeEmpty, type_format::TypeFormat, type_max_length::TypeMaxLength,
 };
 
 pub mod body_empty;
@@ -21,6 +21,7 @@ pub mod scope_empty;
 pub mod scope_format;
 pub mod scope_max_length;
 pub mod subject_empty;
+pub mod ticket_id;
 pub mod r#type;
 pub mod type_empty;
 pub mod type_format;
@@ -69,6 +70,10 @@ pub struct Rules {
     #[serde(rename = "subject-empty")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_empty: Option<SubjectEmpty>,
+
+    #[serde(rename = "ticket-id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ticket_id: Option<TicketId>,
 
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -152,6 +157,12 @@ impl Rules {
             }
         }
 
+        if let Some(rule) = &self.ticket_id {
+            if let Some(validation) = rule.validate(message) {
+                results.push(validation);
+            }
+        }
+
         if let Some(rule) = &self.r#type {
             if let Some(validation) = rule.validate(message) {
                 results.push(validation);
@@ -195,6 +206,7 @@ impl Default for Rules {
             scope_format: None,
             scope_max_length: None,
             subject_empty: SubjectEmpty::default().into(),
+            ticket_id: None,
             r#type: None,
             type_empty: TypeEmpty::default().into(),
             type_format: None,
